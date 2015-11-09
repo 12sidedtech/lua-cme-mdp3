@@ -1,0 +1,22 @@
+{
+  "packetqueueSuperblockName":"pq_superblock",
+  "captureRegionName":"capture_rgn",
+  "cpuCoreId":16,
+  "pcapDevnode" : "/dev/pcap12",
+  "harvesterInstances" : [
+    {
+      "moduleSearch" : "/opt/12sided/lua/?.lua",
+      "rootModule" : "/opt/12sided/lua/harvester/mdp.lua",
+      "harvCfg" : {
+        "maxPktEntryAge" : "5s",
+        "outputQueue" : "cme_mdp3_interest_rate_futures",
+        "filter" : {
+          "type" : "hostPort",
+          "ipProto" : 17,
+          "portNumber" : 14312,
+          "host" : "224.0.31.3"
+        }
+      }
+    }
+  ]
+}

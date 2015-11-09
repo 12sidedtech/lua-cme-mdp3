@@ -1,0 +1,11 @@
+[Unit]
+Description=CME MDP 3.0 Lua Packet Processing Example
+Requires=ipqmon-12sided.service capture-core-12sided.service
+After=ipqmon-12sided.service capture-core-12sided.service
+
+[Service]
+ExecStart=/opt/12sided/bin/lua_harvester /opt/12sided/etc/cme_mdp_packet_processor.json /opt/12sided/etc/ipqueues.json /opt/12sided/etc/tsl_config.json
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target

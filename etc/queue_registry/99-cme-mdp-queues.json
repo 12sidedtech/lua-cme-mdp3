@@ -1,0 +1,10 @@
+{
+  "topics" : [
+    {
+      "topicName" : "cme_mdp3_interest_rate_futures",
+      "namespace" : "out_queues",
+      "memPool" : "single_page_pool",
+      "expireInterval" : "5s"
+    }
+  ]
+}
