@@ -100,6 +100,49 @@ ffi.cdef[[
     int8_t flow_schedule_type;
     mdp_price_null_t min_price_increment_amount;
     int8_t user_defined_instrument;
+    uint16_t trading_reference_date;
+  } __attribute__((__packed__));
+
+  struct mdp_instrument_definition_spread {
+    uint8_t match_event_indicator;
+    uint32_t tot_num_reports;
+    uint8_t security_update_action;
+    uint64_t last_update_time;
+    uint8_t md_security_trading_status;
+    int16_t appl_id;
+    uint8_t market_segment_id;
+    uint8_t underlying_product;
+    uint32_t security_exchange;
+    char security_group[6];
+    char asset[6];
+    char symbol[20];
+    int32_t security_id;
+    uint8_t security_id_source;
+    char security_type[6];
+    char cfi_code[6];
+    char maturity_month_year[5];
+    char currency[3];
+    int8_t security_sub_type;
+    int8_t user_defined_instrument;
+    uint8_t match_algorithm;
+    uint32_t min_trade_vol;
+    uint32_t max_trade_vol;
+    int64_t min_price_increment;
+    int64_t display_factor;
+    uint8_t price_display_format;
+    mdp_price_null_t price_ratio;
+    int8_t tick_rule;
+    char unit_of_measure[30];
+    mdp_price_null_t trading_reference_price;
+    uint8_t settl_price_type;
+    int32_t open_interest_qty;
+    int32_t cleared_volume;
+    mdp_price_null_t high_limit_price;
+    mdp_price_null_t low_limit_price;
+    mdp_price_null_t max_price_variation;
+    uint8_t main_fraction;
+    uint8_t sub_fraction;
+    uint16_t trading_reference_date;
   } __attribute__((__packed__));
 
   struct mdp_security_status {
