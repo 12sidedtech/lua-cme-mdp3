@@ -163,11 +163,12 @@ local function price_level_alloc(alloc)
 end
 
 -- Create a new book
-local function new_book(symbol, max_entries)
+local function new_book(symbol, depth)
   local self = setmetatable({
                   bid = { nr_entries = 0 }, 
                   ask = { nr_entries = 0 }, 
-                  price_levels = new_price_levels_alloc(max_entries * 2),
+                  price_levels = new_price_levels_alloc(depth * 3),
+                  depth = depth,
                   symbol = symbol,
                   next_update = nil,
                 }, Book)
@@ -184,7 +185,7 @@ local function Book_find_price_level(book_side, level)
 
   for i=1,level do
     cur_lev = cur_lev.next_itm
-    if cur_lev == book_side.entries then
+    if cur_lev == book_side then
       Logger.debug("WRAP-AROUND", "Wrapped around, yikes.")
       cur_lev = nil
       break
@@ -267,8 +268,8 @@ function Book.insert_new_price_level(self, side, price, size, nr_orders, level)
   list_insert_after(new_lev, cur_lev)
   book_side.nr_entries = book_side.nr_entries + 1
 
-  if book_side.nr_entries > 10 then
-    Book_prune(self.price_levels, book_side, 10)
+  if book_side.nr_entries > self.depth then
+    Book_prune(self.price_levels, book_side, self.depth)
   end
 
   book_side.needs_update = level <= 3
@@ -331,7 +332,7 @@ function Book.clear_all_price_levels(self, side)
   local cur_level = book_side.next_itm
   local alloc = self.price_levels
 
-  while cur_level ~= book_side.entries do
+  while cur_level ~= book_side do
     local next_level = cur_level.next_itm
     list_remove(cur_level)
     price_level_free(alloc, cur_level)
@@ -361,7 +362,7 @@ function Book.remove_price_levels_from(self, side, levels)
   local cur_level = book_side.next_itm
   local rem = levels
 
-  while cur_level ~= book_side.entries and level > 0 do
+  while cur_level ~= book_side and level > 0 do
     local next_level = cur_level.next_itm
     list_del(cur_level)
   end

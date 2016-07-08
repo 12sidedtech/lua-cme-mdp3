@@ -50,12 +50,21 @@ local kMDP_SECURITY_STATUS_PTR = ffi.typeof("struct mdp_security_status *")
 -- Instrument Definition: Future
 local kMDP_INSTRUMENT_DEFINITION_FUTURE = ffi.typeof("struct mdp_instrument_definition_future *")
 
+-- Instrument Definition: Spread
+local kMDP_INSTRUMENT_DEFINITION_SPREAD = ffi.typeof("struct mdp_instrument_definition_spread *")
+
 -- char ptr for pointer arithmetic
 local kUINT8_PTR = ffi.typeof("uint8_t *")
 
 local kMDP_MD_INCREMENTAL_REFRESH_BOOK_PTR = ffi.typeof("struct mdp_md_incremental_refresh_book *")
+local kMDP_MD_INCREMENTAL_REFRESH_DAILY_STATISTICS_PTR = ffi.sizeof("struct mdp_md_incremental_refresh_daily_statistics *")
+local kMDP_MD_INCREMENTAL_REFRESH_LIMIT_BANDING_PTR = ffi.typeof("struct mdp_md_incremental_refresh_limit_banding *")
+local kMDP_MD_INCREMENTAL_REFRESH_SESSION_STATISTICS_PTR = ffi.typeof("struct mdp_md_incremental_refresh_session_statistics *")
+local kMDP_MD_INCREMENTAL_REFRESH_TRADE_PTR = ffi.typeof("struct mdp_md_incremental_refresh_trade *")
+local kMDP_MD_INCREMENTAL_REFRESH_VOLUME_PTR = ffi.typeof("struct mdp_md_incremental_refresh_volume *")
+local kMDP_MD_INCREMENTAL_REFRESH_TRADE_SUMMARY_PTR = ffi.typeof("struct mdp_md_incremental_refresh_trade_summary *")
 
-local kMDP_VERSION_SUPPORTED = 5
+local kMDP_VERSION_SUPPORTED = 6
 
 -- Update action constants
 local kUPDATE_ACTION_NEW = 0
@@ -70,7 +79,7 @@ local kCHANNEL_RESET                          = 4
 local kADMIN_HEARTBEAT                        = 12
 local kADMIN_LOGOUT                           = 16
 local kMD_INSTRUMENT_DEFINITION_FUTURE        = 27
-local kMD_INSTURMENT_DEFINITION_SPREAD        = 29
+local kMD_INSTRUMENT_DEFINITION_SPREAD        = 29
 local kSECURITY_STATUS                        = 30
 local kMD_INCREMENTAL_REFRESH_BOOK            = 32
 local kMD_INCREMENTAL_REFRESH_DAILY_STATS     = 33
@@ -105,7 +114,7 @@ local function handle_admin_logout(mdstate, msg_hdr)
   return true
 end
 
-local function handle_instrument_definition(mdstate, msg_hdr)
+local function handle_instrument_definition_future(mdstate, msg_hdr)
   local idf = cast_payload(msg_hdr, kMDP_INSTRUMENT_DEFINITION_FUTURE)
 
   Logger.info("INSTRUMENT-DEFINITION-FUTURE", "Symbol: %s Group: %s Asset: %s Currency: %s SettlCurrency: %s Units of %d %s",
@@ -115,7 +124,19 @@ local function handle_instrument_definition(mdstate, msg_hdr)
     ffi.string(idf.currency, 3),
     ffi.string(idf.settl_currency, 3),
     tonumber(idf.unit_of_measure_quantity),
-    ffi.strong(idf.unit_of_measure, 30))
+    ffi.string(idf.unit_of_measure, 30))
+
+  return true
+end
+
+local function handle_instrument_definition_spread(mdstate, msg_hdr)
+  local idf = cast_payload(msg_hdr, kMDP_INSTRUMENT_DEFINITION_SPREAD)
+
+  Logger.info("INSTRUMENT-DEFINITION-SPREAD", "Symbol: %s Group: %s Asset: %s Currency: %s",
+    ffi.string(idf.symbol, 20),
+    ffi.string(idf.security_group, 6),
+    ffi.string(idf.asset, 6),
+    ffi.string(idf.currency, 3))
 
   return true
 end
@@ -175,9 +196,10 @@ end
 
 local function handle_incremental_refresh(mdstate, msg_hdr)
   local md_inc = cast_payload(msg_hdr, kMDP_MD_INCREMENTAL_REFRESH_BOOK_PTR)
+  local num_in_group = md_inc.md_entries_size.num_in_group
 
-  if md_inc.md_entries_size.num_in_group > 0 then
-    for i = 0,md_inc.md_entries_size.num_in_group-1 do
+  if num_in_group > 0 then
+    for i = 0,num_in_group-1 do
       local entry = md_inc.md_entries[i]
       if entry.md_update_action == kUPDATE_ACTION_NEW then
         mdstate.on_new_price_level(mdstate, entry)
@@ -232,7 +254,7 @@ end
 
 -- Given the current message header and the remaining bytes, return the next message header
 local function get_next_message_header(cur_msg_hdr, bytes_remain)
-  if bytes_remain <= cur_msg_hdr.msg_size then
+  if bytes_remain <= cur_msg_hdr.msg_size + kMDP_MESSAGE_HDR_LEN then
     return nil, 0
   else
     return ffi.cast(kMDP_MESSAGE_HDR_PTR, ffi.cast(kUINT8_PTR, cur_msg_hdr) + cur_msg_hdr.msg_size), bytes_remain - cur_msg_hdr.msg_size
@@ -302,7 +324,9 @@ function MarketDataHandler.on_message(self, ll_payload)
     elseif hdr.template_id == kSECURITY_STATUS then
       handle_security_status(self, hdr)
     elseif hdr.template_id == kMD_INSTRUMENT_DEFINITION_FUTURE then
-      handle_instrument_definition(self, hdr)
+      handle_instrument_definition_future(self, hdr)
+    elseif hdr.template_id == kMD_INSTRUMENT_DEFINITION_SPREAD then
+      handle_instrument_definition_spread(self, hdr)
     elseif hdr.template_id == kADMIN_HEARTBEAT then
      handle_heartbeat(self, hdr)
     elseif hdr.template_id == kSNAPSHOT_FULL_REFRESH then
@@ -319,6 +343,8 @@ function MarketDataHandler.on_message(self, ll_payload)
       handle_incremental_refresh_daily_stats(self, hdr)
     elseif hdr.template_id == kMD_INCREMENTAL_REFRESH_LIMITS_BANDING then
       handle_incremental_refresh_limits_banding(self, hdr)
+    elseif hdr.template_id == kMD_INCREMENTAL_REFRESH_TRADE then
+      handle_incremental_refresh_trade(self, hdr)
     else
       handle_unhandled(self, hdr)
     end
