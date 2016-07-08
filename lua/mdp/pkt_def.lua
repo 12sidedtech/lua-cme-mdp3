@@ -172,7 +172,7 @@ ffi.cdef[[
   struct mdp_md_incremental_refresh_book {
     uint64_t transact_time;
     uint8_t match_event_indicator;
-    uint16_t wtf;
+    uint8_t __padding__[2];
     struct mdp_group_size md_entries_size;
     struct mdp_md_incremental_refresh_book_md_entries md_entries[];
   } __attribute__((__packed__));
