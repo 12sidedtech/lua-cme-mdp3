@@ -57,6 +57,12 @@ local kMDP_INSTRUMENT_DEFINITION_SPREAD = ffi.typeof("struct mdp_instrument_defi
 local kUINT8_PTR = ffi.typeof("uint8_t *")
 
 local kMDP_MD_INCREMENTAL_REFRESH_BOOK_PTR = ffi.typeof("struct mdp_md_incremental_refresh_book *")
+local kMDP_MD_INCREMENTAL_REFRESH_DAILY_STATISTICS_PTR = ffi.sizeof("struct mdp_md_incremental_refresh_daily_statistics *")
+local kMDP_MD_INCREMENTAL_REFRESH_LIMIT_BANDING_PTR = ffi.typeof("struct mdp_md_incremental_refresh_limit_banding *")
+local kMDP_MD_INCREMENTAL_REFRESH_SESSION_STATISTICS_PTR = ffi.typeof("struct mdp_md_incremental_refresh_session_statistics *")
+local kMDP_MD_INCREMENTAL_REFRESH_TRADE_PTR = ffi.typeof("struct mdp_md_incremental_refresh_trade *")
+local kMDP_MD_INCREMENTAL_REFRESH_VOLUME_PTR = ffi.typeof("struct mdp_md_incremental_refresh_volume *")
+local kMDP_MD_INCREMENTAL_REFRESH_TRADE_SUMMARY_PTR = ffi.typeof("struct mdp_md_incremental_refresh_trade_summary *")
 
 local kMDP_VERSION_SUPPORTED = 6
 
@@ -337,6 +343,8 @@ function MarketDataHandler.on_message(self, ll_payload)
       handle_incremental_refresh_daily_stats(self, hdr)
     elseif hdr.template_id == kMD_INCREMENTAL_REFRESH_LIMITS_BANDING then
       handle_incremental_refresh_limits_banding(self, hdr)
+    elseif hdr.template_id == kMD_INCREMENTAL_REFRESH_TRADE then
+      handle_incremental_refresh_trade(self, hdr)
     else
       handle_unhandled(self, hdr)
     end
